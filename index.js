@@ -29,7 +29,7 @@ let usersCollection, parcelsCollection, deliveryMenCollection;
 
 async function run() {
   try {
-    // await client.connect();
+    await client.connect();
     console.log(" Connected to MongoDB successfully!");
 
     const db = client.db("parcelManagement");
