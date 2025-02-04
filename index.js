@@ -30,7 +30,7 @@ let usersCollection, parcelsCollection, deliveryMenCollection;
 async function run() {
   try {
     await client.connect();
-    console.log("✅ Connected to MongoDB successfully!");
+    console.log(" Connected to MongoDB successfully!");
 
     const db = client.db("parcelManagement");
     usersCollection = db.collection("users");
@@ -430,14 +430,14 @@ async function run() {
 
         // Insert into MongoDB collection
         const result = await parcelsCollection.insertOne(parcel);
-        console.log("✅ Parcel successfully booked:", result.insertedId);
+        console.log(" Parcel successfully booked:", result.insertedId);
 
         res.status(201).json({
           message: "Parcel booked successfully",
           parcelId: result.insertedId,
         });
       } catch (error) {
-        console.error("❌ Error booking parcel:", error.message);
+        console.error(" Error booking parcel:", error.message);
         res.status(500).json({ message: "Server error", error: error.message });
       }
     });
@@ -707,16 +707,16 @@ async function run() {
     });
     app.get("/my-reviews/:email", async (req, res) => {
       const { email } = req.params;
-      console.log("🔎 Fetching Reviews for:", email);
+      console.log(" Fetching Reviews for:", email);
 
       try {
         const reviews = await reviewsCollection
           .find({ deliveryManEmail: email })
           .toArray();
-        console.log("✅ Found Reviews:", reviews);
+        console.log(" Found Reviews:", reviews);
         res.json(reviews);
       } catch (error) {
-        console.error("❌ Error Fetching Reviews:", error);
+        console.error(" Error Fetching Reviews:", error);
         res.status(500).json({ error: "Failed to fetch reviews" });
       }
     });
@@ -769,7 +769,7 @@ async function run() {
 
         res.json(topDeliveryMen);
       } catch (error) {
-        console.error("❌ Error fetching top delivery men:", error);
+        console.error(" Error fetching top delivery men:", error);
         res.status(500).json({ error: "Failed to fetch data" });
       }
     });
@@ -777,7 +777,7 @@ async function run() {
     //  Fetch all parcels
     //
   } catch (error) {
-    console.error("❌ Error connecting to MongoDB:", error);
+    console.error(" Error connecting to MongoDB:", error);
   }
 }
 
@@ -791,5 +791,5 @@ app.get("/", (req, res) => {
 
 // Start Server
 app.listen(port, () => {
-  console.log(`✅ Server is running on http://localhost:${port}`);
+  console.log(` Server is running on http://localhost:${port}`);
 });
