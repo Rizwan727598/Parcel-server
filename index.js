@@ -302,14 +302,14 @@ async function run() {
         res.status(500).json({ message: "Failed to fetch reviews" });
       }
     });
-    app.post("/logout", async (req, res) => {
-      try {
-        res.clearCookie("authToken"); // Clear session if using cookies
-        res.json({ message: "Logged out successfully" });
-      } catch (error) {
-        res.status(500).json({ message: "Logout failed", error });
-      }
-    });
+    // app.post("/logout", async (req, res) => {
+    //   try {
+    //     res.clearCookie("authToken"); // Clear session if using cookies
+    //     res.json({ message: "Logged out successfully" });
+    //   } catch (error) {
+    //     res.status(500).json({ message: "Logout failed", error });
+    //   }
+    // });
     app.get("/user/:email", async (req, res) => {
       try {
         const email = req.params.email;
