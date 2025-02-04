@@ -338,25 +338,25 @@ async function run() {
         res.status(500).json({ message: "Server error", error: error.message });
       }
     });
-    // app.get("/stats", async (req, res) => {
-    //   try {
-    //     const bookedCount = await parcelsCollection.countDocuments({});
-    //     const deliveredCount = await parcelsCollection.countDocuments({
-    //       status: "delivered",
-    //     });
-    //     const userCount = await usersCollection.countDocuments({});
+    app.get("/stats", async (req, res) => {
+      try {
+        const bookedCount = await parcelsCollection.countDocuments({});
+        const deliveredCount = await parcelsCollection.countDocuments({
+          status: "delivered",
+        });
+        const userCount = await usersCollection.countDocuments({});
 
-    //     res.json({
-    //       booked: bookedCount,
-    //       delivered: deliveredCount,
-    //       users: userCount,
-    //     });
-    //   } catch (error) {
-    //     res
-    //       .status(500)
-    //       .json({ message: "Error fetching stats", error: error.message });
-    //   }
-    // });
+        res.json({
+          booked: bookedCount,
+          delivered: deliveredCount,
+          users: userCount,
+        });
+      } catch (error) {
+        res
+          .status(500)
+          .json({ message: "Error fetching stats", error: error.message });
+      }
+    });
     app.get("/user/:email", async (req, res) => {
       try {
         const email = req.params.email;
