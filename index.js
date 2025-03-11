@@ -2,11 +2,10 @@ require("dotenv").config();
 const express = require("express");
 const cors = require("cors");
 const { MongoClient, ServerApiVersion, ObjectId } = require("mongodb");
-// const stripe = require("stripe")(process.env.STRIPE_SECRET_KEY);
+
 const app = express();
 const port = process.env.PORT || 8000;
 const Stripe = require("stripe");
-// const emailRoutes = require("./routes/emails");
 
 // Middleware
 app.use(cors());
@@ -50,43 +49,7 @@ async function run() {
         res.status(500).json({ message: "Server Error" });
       }
     });
-    // app.get("/top-delivery-men", async (req, res) => {
-    //   try {
-    //     const topDeliveryMen = await deliveryMenCollection
-    //       .aggregate([
-    //         {
-    //           $lookup: {
-    //             from: "reviews",
-    //             localField: "_id",
-    //             foreignField: "deliveryManId",
-    //             as: "reviews",
-    //           },
-    //         },
-    //         {
-    //           $addFields: {
-    //             deliveredParcels: { $size: "$deliveredParcels" },
-    //             averageRating: { $avg: "$reviews.rating" },
-    //           },
-    //         },
-    //         { $sort: { deliveredParcels: -1, averageRating: -1 } },
-    //         { $limit: 3 },
-    //         {
-    //           $project: {
-    //             name: 1,
-    //             image: 1,
-    //             deliveredParcels: 1,
-    //             averageRating: { $ifNull: ["$averageRating", 0] },
-    //           },
-    //         },
-    //       ])
-    //       .toArray();
 
-    //     res.json(topDeliveryMen);
-    //   } catch (error) {
-    //     console.error("Error fetching top delivery men:", error);
-    //     res.status(500).json({ message: "Server Error" });
-    //   }
-    // });
     app.post("/register", async (req, res) => {
       const { name, email, profileImage, userType } = req.body;
       const existingUser = await usersCollection.findOne({ email });
@@ -563,31 +526,6 @@ async function run() {
         res.status(500).json({ error: "Failed to fetch assigned deliveries" });
       }
     });
-    // app.put("/assign-parcel/:parcelId", async (req, res) => {
-    //   const { parcelId } = req.params;
-    //   const { deliveryManId, approximateDeliveryDate } = req.body;
-
-    //   try {
-    //     const result = await parcelsCollection.updateOne(
-    //       { _id: new ObjectId(parcelId) },
-    //       {
-    //         $set: {
-    //           deliveryManId,
-    //           approximateDeliveryDate,
-    //           status: "On The Way",
-    //         },
-    //       }
-    //     );
-
-    //     if (result.modifiedCount === 0) {
-    //       return res.status(400).json({ error: "Parcel assignment failed" });
-    //     }
-
-    //     res.json({ message: "Parcel assigned successfully" });
-    //   } catch (error) {
-    //     res.status(500).json({ error: "Error assigning parcel" });
-    //   }
-    // });
 
     app.get("/my-parcels/:email", async (req, res) => {
       try {
@@ -732,63 +670,6 @@ async function run() {
         res.status(500).json({ error: "Failed to fetch data" });
       }
     });
-
-    // app.get("/top-delivery-men", async (req, res) => {
-    //   try {
-    //     // Aggregation pipeline: Count parcels & calculate average rating
-    //     const topDeliveryMen = await deliveryMenCollection
-    //       .aggregate([
-    //         {
-    //           $lookup: {
-    //             from: "parcels",
-    //             localField: "email",
-    //             foreignField: "deliveryManEmail",
-    //             as: "parcels",
-    //           },
-    //         },
-    //         {
-    //           $lookup: {
-    //             from: "reviews",
-    //             localField: "email",
-    //             foreignField: "deliveryManEmail",
-    //             as: "reviews",
-    //           },
-    //         },
-    //         {
-    //           $addFields: {
-    //             totalDelivered: { $size: "$parcels" },
-    //             avgRating: {
-    //               $cond: {
-    //                 if: { $gt: [{ $size: "$reviews" }, 0] },
-    //                 then: { $avg: "$reviews.rating" },
-    //                 else: 0,
-    //               },
-    //             },
-    //           },
-    //         },
-    //         { $sort: { totalDelivered: -1, avgRating: -1 } },
-    //         { $limit: 3 },
-    //         {
-    //           $project: {
-    //             _id: 1,
-    //             name: 1,
-    //             image: 1,
-    //             totalDelivered: 1,
-    //             avgRating: 1,
-    //           },
-    //         },
-    //       ])
-    //       .toArray();
-
-    //     res.json(topDeliveryMen);
-    //   } catch (error) {
-    //     console.error(" Error fetching top delivery men:", error);
-    //     res.status(500).json({ error: "Failed to fetch data" });
-    //   }
-    // });
-
-    //  Fetch all parcels
-    //
   } catch (error) {
     console.error(" Error connecting to MongoDB:", error);
   }
