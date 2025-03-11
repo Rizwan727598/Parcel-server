@@ -29,7 +29,7 @@ let usersCollection, parcelsCollection, deliveryMenCollection;
 
 async function run() {
   try {
-    await client.connect();
+    // await client.connect();
     console.log(" Connected to MongoDB successfully!");
 
     const db = client.db("parcelManagement");
@@ -50,43 +50,43 @@ async function run() {
         res.status(500).json({ message: "Server Error" });
       }
     });
-    app.get("/top-delivery-men", async (req, res) => {
-      try {
-        const topDeliveryMen = await deliveryMenCollection
-          .aggregate([
-            {
-              $lookup: {
-                from: "reviews",
-                localField: "_id",
-                foreignField: "deliveryManId",
-                as: "reviews",
-              },
-            },
-            {
-              $addFields: {
-                deliveredParcels: { $size: "$deliveredParcels" },
-                averageRating: { $avg: "$reviews.rating" },
-              },
-            },
-            { $sort: { deliveredParcels: -1, averageRating: -1 } },
-            { $limit: 3 },
-            {
-              $project: {
-                name: 1,
-                image: 1,
-                deliveredParcels: 1,
-                averageRating: { $ifNull: ["$averageRating", 0] },
-              },
-            },
-          ])
-          .toArray();
+    // app.get("/top-delivery-men", async (req, res) => {
+    //   try {
+    //     const topDeliveryMen = await deliveryMenCollection
+    //       .aggregate([
+    //         {
+    //           $lookup: {
+    //             from: "reviews",
+    //             localField: "_id",
+    //             foreignField: "deliveryManId",
+    //             as: "reviews",
+    //           },
+    //         },
+    //         {
+    //           $addFields: {
+    //             deliveredParcels: { $size: "$deliveredParcels" },
+    //             averageRating: { $avg: "$reviews.rating" },
+    //           },
+    //         },
+    //         { $sort: { deliveredParcels: -1, averageRating: -1 } },
+    //         { $limit: 3 },
+    //         {
+    //           $project: {
+    //             name: 1,
+    //             image: 1,
+    //             deliveredParcels: 1,
+    //             averageRating: { $ifNull: ["$averageRating", 0] },
+    //           },
+    //         },
+    //       ])
+    //       .toArray();
 
-        res.json(topDeliveryMen);
-      } catch (error) {
-        console.error("Error fetching top delivery men:", error);
-        res.status(500).json({ message: "Server Error" });
-      }
-    });
+    //     res.json(topDeliveryMen);
+    //   } catch (error) {
+    //     console.error("Error fetching top delivery men:", error);
+    //     res.status(500).json({ message: "Server Error" });
+    //   }
+    // });
     app.post("/register", async (req, res) => {
       const { name, email, profileImage, userType } = req.body;
       const existingUser = await usersCollection.findOne({ email });
@@ -120,23 +120,7 @@ async function run() {
 
       res.json({ userType: user.userType });
     }); // Update Parcel (Only if status is pending)
-    app.put("/update-parcel/:id", async (req, res) => {
-      const { id } = req.params;
-      const updatedParcel = req.body;
 
-      const parcel = await parcelsCollection.findOne({ _id: new ObjectId(id) });
-      if (!parcel || parcel.status !== "pending") {
-        return res
-          .status(400)
-          .json({ message: "Only pending parcels can be updated." });
-      }
-
-      await parcelsCollection.updateOne(
-        { _id: new ObjectId(id) },
-        { $set: updatedParcel }
-      );
-      res.json({ message: "Parcel updated successfully" });
-    });
     app.get("/stats", async (req, res) => {
       try {
         const bookings = await parcelsCollection
@@ -357,6 +341,7 @@ async function run() {
           .json({ message: "Error fetching stats", error: error.message });
       }
     });
+
     app.get("/user/:email", async (req, res) => {
       try {
         const email = req.params.email;
@@ -442,33 +427,6 @@ async function run() {
       }
     });
 
-    app.get("/my-deliveries/:email", async (req, res) => {
-      try {
-        const { email } = req.params;
-
-        // Find the delivery man by email
-        const deliveryMan = await usersCollection.findOne({
-          email,
-          userType: "DeliveryMen",
-        });
-
-        if (!deliveryMan) {
-          return res.status(404).json({ message: "Delivery Man not found" });
-        }
-
-        // Fetch parcels assigned to this delivery man
-        const assignedParcels = await parcelsCollection
-          .find({ deliveryManId: deliveryMan._id.toString() })
-          .toArray();
-
-        res.json(assignedParcels);
-      } catch (error) {
-        res.status(500).json({
-          message: "Error fetching assigned parcels",
-          error: error.message,
-        });
-      }
-    });
     app.put("/assign-parcel/:parcelId", async (req, res) => {
       try {
         const { parcelId } = req.params;
@@ -489,7 +447,7 @@ async function run() {
           { _id: new ObjectId(parcelId) },
           {
             $set: {
-              deliveryManId: deliveryMan._id.toString(),
+              deliveryManId: deliveryMan.email,
               approximateDeliveryDate,
               status: "On The Way",
             },
@@ -509,72 +467,64 @@ async function run() {
       }
     });
 
-    app.get("/my-deliveries/:email", async (req, res) => {
-      try {
-        const { email } = req.params;
+    app.put("/update-parcel/:id", async (req, res) => {
+      const { id } = req.params;
+      const { status } = req.body;
 
-        // Find the delivery man by email
-        const deliveryMan = await usersCollection.findOne({
-          email,
-          userType: "DeliveryMen",
-        });
+      console.log(" Received Request - ID:", id, "Status:", status); // Debugging
 
-        if (!deliveryMan) {
-          return res.status(404).json({ message: "Delivery Man not found" });
-        }
-
-        // Fetch parcels assigned to this delivery man
-        const assignedParcels = await parcelsCollection
-          .find({ deliveryManId: deliveryMan._id.toString() })
-          .toArray();
-
-        res.json(assignedParcels);
-      } catch (error) {
-        res.status(500).json({
-          message: "Error fetching assigned parcels",
-          error: error.message,
-        });
+      if (!ObjectId.isValid(id)) {
+        return res.status(400).json({ message: "Invalid Parcel ID" });
       }
-    });
-    app.put("/assign-parcel/:parcelId", async (req, res) => {
-      try {
-        const { parcelId } = req.params;
-        const { deliveryManId, approximateDeliveryDate } = req.body;
 
-        // Validate Delivery Man Exists
-        const deliveryMan = await usersCollection.findOne({
-          _id: new ObjectId(deliveryManId),
-          userType: "DeliveryMen",
+      if (!status) {
+        return res.status(400).json({ message: "Status is required" });
+      }
+
+      try {
+        // Check if parcel exists first
+        const existingParcel = await parcelsCollection.findOne({
+          _id: new ObjectId(id),
         });
 
-        if (!deliveryMan) {
-          return res.status(404).json({ message: "Delivery Man not found" });
+        if (!existingParcel) {
+          console.log(" Parcel Not Found:", id);
+          return res.status(404).json({ message: "Parcel not found." });
         }
 
-        // Update Parcel
+        if (existingParcel.status === "Delivered") {
+          console.log(" Parcel Already Delivered:", id);
+          return res
+            .status(400)
+            .json({ message: "Parcel is already delivered." });
+        }
+
+        // Update the parcel status
         const result = await parcelsCollection.updateOne(
-          { _id: new ObjectId(parcelId) },
-          {
-            $set: {
-              deliveryManId: deliveryMan._id.toString(),
-              approximateDeliveryDate,
-              status: "On The Way",
-            },
-          }
+          { _id: new ObjectId(id) },
+          { $set: { status } }
         );
 
-        if (result.modifiedCount > 0) {
-          res.json({ message: "Parcel assigned successfully!" });
-        } else {
-          res.status(400).json({ message: "Failed to assign parcel" });
+        console.log("✅ Update Result:", result);
+
+        if (result.matchedCount > 0) {
+          return res.json({
+            message: "Parcel Delivered Successfully",
+            updatedParcel: true,
+          });
         }
+
+        return res
+          .status(400)
+          .json({ message: "Failed to update parcel status." });
       } catch (error) {
-        res.status(500).json({
-          message: "Error assigning delivery man",
-          error: error.message,
-        });
+        console.error(" Server Error:", error);
+        return res
+          .status(500)
+          .json({ message: "Server error", error: error.message });
       }
     });
+
     app.get("/my-deliveries/:email", async (req, res) => {
       try {
         const { email } = req.params;
@@ -591,7 +541,7 @@ async function run() {
 
         // Fetch parcels assigned to this delivery man
         const assignedParcels = await parcelsCollection
-          .find({ deliveryManId: deliveryMan._id.toString() })
+          .find({ deliveryManId: deliveryMan.email })
           .toArray();
 
         res.json(assignedParcels);
@@ -606,38 +556,38 @@ async function run() {
       const { id } = req.params;
       try {
         const deliveries = await parcelsCollection
-          .find({ deliveryManId: id })
+          .find({ deliveryManId: email })
           .toArray();
         res.json(deliveries);
       } catch (error) {
         res.status(500).json({ error: "Failed to fetch assigned deliveries" });
       }
     });
-    app.put("/assign-parcel/:parcelId", async (req, res) => {
-      const { parcelId } = req.params;
-      const { deliveryManId, approximateDeliveryDate } = req.body;
+    // app.put("/assign-parcel/:parcelId", async (req, res) => {
+    //   const { parcelId } = req.params;
+    //   const { deliveryManId, approximateDeliveryDate } = req.body;
 
-      try {
-        const result = await parcelsCollection.updateOne(
-          { _id: new ObjectId(parcelId) },
-          {
-            $set: {
-              deliveryManId,
-              approximateDeliveryDate,
-              status: "On The Way",
-            },
-          }
-        );
+    //   try {
+    //     const result = await parcelsCollection.updateOne(
+    //       { _id: new ObjectId(parcelId) },
+    //       {
+    //         $set: {
+    //           deliveryManId,
+    //           approximateDeliveryDate,
+    //           status: "On The Way",
+    //         },
+    //       }
+    //     );
 
-        if (result.modifiedCount === 0) {
-          return res.status(400).json({ error: "Parcel assignment failed" });
-        }
+    //     if (result.modifiedCount === 0) {
+    //       return res.status(400).json({ error: "Parcel assignment failed" });
+    //     }
 
-        res.json({ message: "Parcel assigned successfully" });
-      } catch (error) {
-        res.status(500).json({ error: "Error assigning parcel" });
-      }
-    });
+    //     res.json({ message: "Parcel assigned successfully" });
+    //   } catch (error) {
+    //     res.status(500).json({ error: "Error assigning parcel" });
+    //   }
+    // });
 
     app.get("/my-parcels/:email", async (req, res) => {
       try {
@@ -722,7 +672,6 @@ async function run() {
     });
     app.get("/top-delivery-men", async (req, res) => {
       try {
-        // Aggregation pipeline: Count parcels & calculate average rating
         const topDeliveryMen = await deliveryMenCollection
           .aggregate([
             {
@@ -747,12 +696,21 @@ async function run() {
                 avgRating: {
                   $cond: {
                     if: { $gt: [{ $size: "$reviews" }, 0] },
-                    then: { $avg: "$reviews.rating" },
+                    then: {
+                      $avg: {
+                        $map: {
+                          input: "$reviews",
+                          as: "review",
+                          in: { $toDouble: "$$review.rating" },
+                        },
+                      },
+                    },
                     else: 0,
                   },
                 },
               },
             },
+            { $match: { totalDelivered: { $gt: 0 } } }, // Only show if they have delivered parcels
             { $sort: { totalDelivered: -1, avgRating: -1 } },
             { $limit: 3 },
             {
@@ -761,18 +719,73 @@ async function run() {
                 name: 1,
                 image: 1,
                 totalDelivered: 1,
-                avgRating: 1,
+                avgRating: { $round: ["$avgRating", 1] },
               },
             },
           ])
           .toArray();
 
+        console.log("🚀 Top Delivery Men:", topDeliveryMen); // Debugging log
         res.json(topDeliveryMen);
       } catch (error) {
-        console.error(" Error fetching top delivery men:", error);
+        console.error("❌ Error fetching top delivery men:", error);
         res.status(500).json({ error: "Failed to fetch data" });
       }
     });
+
+    // app.get("/top-delivery-men", async (req, res) => {
+    //   try {
+    //     // Aggregation pipeline: Count parcels & calculate average rating
+    //     const topDeliveryMen = await deliveryMenCollection
+    //       .aggregate([
+    //         {
+    //           $lookup: {
+    //             from: "parcels",
+    //             localField: "email",
+    //             foreignField: "deliveryManEmail",
+    //             as: "parcels",
+    //           },
+    //         },
+    //         {
+    //           $lookup: {
+    //             from: "reviews",
+    //             localField: "email",
+    //             foreignField: "deliveryManEmail",
+    //             as: "reviews",
+    //           },
+    //         },
+    //         {
+    //           $addFields: {
+    //             totalDelivered: { $size: "$parcels" },
+    //             avgRating: {
+    //               $cond: {
+    //                 if: { $gt: [{ $size: "$reviews" }, 0] },
+    //                 then: { $avg: "$reviews.rating" },
+    //                 else: 0,
+    //               },
+    //             },
+    //           },
+    //         },
+    //         { $sort: { totalDelivered: -1, avgRating: -1 } },
+    //         { $limit: 3 },
+    //         {
+    //           $project: {
+    //             _id: 1,
+    //             name: 1,
+    //             image: 1,
+    //             totalDelivered: 1,
+    //             avgRating: 1,
+    //           },
+    //         },
+    //       ])
+    //       .toArray();
+
+    //     res.json(topDeliveryMen);
+    //   } catch (error) {
+    //     console.error(" Error fetching top delivery men:", error);
+    //     res.status(500).json({ error: "Failed to fetch data" });
+    //   }
+    // });
 
     //  Fetch all parcels
     //
